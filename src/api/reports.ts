@@ -186,65 +186,55 @@ router.get('/preview', authorize(['admin']), async (req, res) => {
   const SAMPLE_LIMIT = 8;
 
   try {
-    const [
-      payments,
-      attendance,
-      members,
-      retention,
-      reconciliation,
-      paymentsAgg,
-      paymentSamples,
-      attendanceSamples,
-      memberSamples,
-    ] = await Promise.all([
-      query<{ count: string }>(
-        `SELECT COUNT(*)::text AS count FROM payments p WHERE 1=1${paymentsFilter.sql}`,
+    // Wave 1: Payments aggregate and Attendance count (Max 2 concurrent connections)
+    const [paymentsAgg, attendance] = await Promise.all([
+      query<{
+        total_usd: string;
+        approved: string;
+        pending: string;
+        rejected: string;
+        total: string;
+      }>(
+        `SELECT
+           COALESCE(SUM(CASE WHEN p.status = 'approved' THEN p.amount_usd ELSE 0 END), 0)::text AS total_usd,
+           COUNT(*) FILTER (WHERE p.status = 'approved')::text AS approved,
+           COUNT(*) FILTER (WHERE p.status = 'pending')::text AS pending,
+           COUNT(*) FILTER (WHERE p.status = 'rejected')::text AS rejected,
+           COUNT(*)::text AS total
+         FROM payments p
+         WHERE 1=1${paymentsFilter.sql}`,
         paymentsFilter.params
       ),
       query<{ count: string }>(
         `SELECT COUNT(*)::text AS count FROM attendance a WHERE 1=1${attendanceFilter.sql}`,
         attendanceFilter.params
       ),
-      query<{ count: string }>(
-        `SELECT COUNT(*)::text AS count FROM users WHERE role = 'member'`,
-        []
-      ),
-      query<{ count: string }>(
-        `SELECT COUNT(*)::text AS count FROM subscriptions
-         WHERE status IN ('expired', 'inactive')
-           AND end_date >= COALESCE($1::date, CURRENT_DATE - 30)
-           AND end_date <= COALESCE($2::date, CURRENT_DATE)`,
-        [from, to]
-      ),
-      query<{ count: string }>(
-        `SELECT (
-           (SELECT COUNT(*) FROM payments WHERE status = 'pending' AND created_at < NOW() - INTERVAL '2 days')
-           +
-           (SELECT COUNT(*) FROM subscriptions s
-            WHERE s.status = 'active' AND s.end_date >= CURRENT_DATE
-              AND NOT EXISTS (
-                SELECT 1 FROM payments p
-                WHERE p.user_id = s.user_id AND p.status = 'approved'
-                  AND p.created_at::date >= COALESCE($1::date, CURRENT_DATE - 30)
-                  AND p.created_at::date <= COALESCE($2::date, CURRENT_DATE)
-              ))
-         )::text AS count`,
-        [from, to]
-      ),
+    ]);
+
+    // Wave 2: Consolidated general metrics (members, retention, reconciliation) and payment samples (Max 2 concurrent connections)
+    const [countsRes, paymentSamples] = await Promise.all([
       query<{
-        total_usd: string;
-        approved: string;
-        pending: string;
-        rejected: string;
+        total_members: string;
+        total_retention: string;
+        total_reconciliation: string;
       }>(
         `SELECT
-           COALESCE(SUM(CASE WHEN p.status = 'approved' THEN p.amount_usd ELSE 0 END), 0)::text AS total_usd,
-           COUNT(*) FILTER (WHERE p.status = 'approved')::text AS approved,
-           COUNT(*) FILTER (WHERE p.status = 'pending')::text AS pending,
-           COUNT(*) FILTER (WHERE p.status = 'rejected')::text AS rejected
-         FROM payments p
-         WHERE 1=1${paymentsFilter.sql}`,
-        paymentsFilter.params
+           (SELECT COUNT(*)::text FROM users WHERE role = 'member') AS total_members,
+           (SELECT COUNT(*)::text FROM subscriptions
+            WHERE status IN ('expired', 'inactive')
+              AND end_date >= COALESCE($1::date, CURRENT_DATE - 30)
+              AND end_date <= COALESCE($2::date, CURRENT_DATE)) AS total_retention,
+           ((SELECT COUNT(*) FROM payments WHERE status = 'pending' AND created_at < NOW() - INTERVAL '2 days')
+            +
+            (SELECT COUNT(*) FROM subscriptions s
+             WHERE s.status = 'active' AND s.end_date >= CURRENT_DATE
+               AND NOT EXISTS (
+                 SELECT 1 FROM payments p
+                 WHERE p.user_id = s.user_id AND p.status = 'approved'
+                   AND p.created_at::date >= COALESCE($1::date, CURRENT_DATE - 30)
+                   AND p.created_at::date <= COALESCE($2::date, CURRENT_DATE)
+               )))::text AS total_reconciliation`,
+        [from, to]
       ),
       query<{
         created_at: Date | string;
@@ -261,6 +251,10 @@ router.get('/preview', authorize(['admin']), async (req, res) => {
          LIMIT ${SAMPLE_LIMIT}`,
         paymentsFilter.params
       ),
+    ]);
+
+    // Wave 3: Attendance and Member samples (Max 2 concurrent connections)
+    const [attendanceSamples, memberSamples] = await Promise.all([
       query<{
         check_in_time: Date | string;
         full_name: string;
@@ -301,14 +295,20 @@ router.get('/preview', authorize(['admin']), async (req, res) => {
       approved: '0',
       pending: '0',
       rejected: '0',
+      total: '0',
+    };
+    const counts = countsRes.rows[0] ?? {
+      total_members: '0',
+      total_retention: '0',
+      total_reconciliation: '0',
     };
 
     res.json({
-      payments: parseInt(payments.rows[0]?.count || '0', 10),
+      payments: parseInt(agg.total, 10),
       attendance: parseInt(attendance.rows[0]?.count || '0', 10),
-      members: parseInt(members.rows[0]?.count || '0', 10),
-      retention: parseInt(retention.rows[0]?.count || '0', 10),
-      reconciliation: parseInt(reconciliation.rows[0]?.count || '0', 10),
+      members: parseInt(counts.total_members, 10),
+      retention: parseInt(counts.total_retention, 10),
+      reconciliation: parseInt(counts.total_reconciliation, 10),
       paymentsTotalUsd: Number(agg.total_usd),
       paymentsApproved: parseInt(agg.approved, 10),
       paymentsPending: parseInt(agg.pending, 10),

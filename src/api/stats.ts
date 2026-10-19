@@ -91,20 +91,8 @@ export interface AdminStatsPayload {
 async function buildAdminStats(): Promise<AdminStatsPayload> {
   const alertDays = await getExpiryAlertDays();
 
-  const [
-    paymentAgg,
-    pendingAgg,
-    activeSubscriptions,
-    attendanceAgg,
-    revenueHistory,
-    revenueDaily,
-    expiringList,
-    expiredThisWeek,
-    lastDoorAlert,
-    equipmentStats,
-    pausedSubs,
-    demoPending,
-  ] = await Promise.all([
+  // Wave 1: Core revenue aggregates and consolidated operational counts (Max 2 concurrent queries)
+  const [paymentAgg, adminCountsRes] = await Promise.all([
     query<{ total_all: string; this_month: string; last_month: string; today: string }>(
       `SELECT
          COALESCE(SUM(amount_usd), 0)::text AS total_all,
@@ -121,17 +109,24 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
        FROM payments
        WHERE status = 'approved'`
     ),
-    query<{ pending: string; pending_old: string }>(
+    query<{
+      pending: string;
+      pending_old: string;
+      active_subs: string;
+      paused_subs: string;
+      demo_pending: string;
+    }>(
       `SELECT
-         COUNT(*)::text AS pending,
-         COUNT(*) FILTER (WHERE created_at < NOW() - INTERVAL '2 days')::text AS pending_old
-       FROM payments
-       WHERE status = 'pending'`
+         (SELECT COUNT(*)::text FROM payments WHERE status = 'pending') AS pending,
+         (SELECT COUNT(*) FILTER (WHERE created_at < NOW() - INTERVAL '2 days')::text FROM payments WHERE status = 'pending') AS pending_old,
+         (SELECT COUNT(DISTINCT user_id)::text FROM subscriptions WHERE status = 'active' AND end_date >= CURRENT_DATE) AS active_subs,
+         (SELECT COUNT(*)::text FROM subscriptions WHERE status = 'paused') AS paused_subs,
+         (SELECT COUNT(*)::text FROM demo_requests WHERE status = 'pending') AS demo_pending`
     ),
-    query<{ count: string }>(
-      `SELECT COUNT(DISTINCT user_id)::text AS count FROM subscriptions
-       WHERE status = 'active' AND end_date >= CURRENT_DATE`
-    ),
+  ]);
+
+  // Wave 2: Attendance metrics and Revenue History (Max 2 concurrent queries)
+  const [attendanceAgg, revenueHistory] = await Promise.all([
     query<{ today: string; yesterday: string }>(
       `SELECT
          COUNT(*) FILTER (WHERE ${sqlTodayRange('check_in_time')})::text AS today,
@@ -152,6 +147,10 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
       GROUP BY TO_CHAR(created_at, 'YYYY-MM')
       ORDER BY month ASC`
     ),
+  ]);
+
+  // Wave 3: Revenue Daily and Equipment Summary (Max 2 concurrent queries)
+  const [revenueDaily, equipmentStats] = await Promise.all([
     query<{ date: string; income: string }>(
       `SELECT
         TO_CHAR(created_at::date, 'YYYY-MM-DD') AS date,
@@ -162,24 +161,30 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
       GROUP BY created_at::date
       ORDER BY date ASC`
     ),
+    getEquipmentStatsSummary(),
+  ]);
+
+  // Wave 4: Subscriptions expiration and door alerts (Max 3 concurrent queries)
+  const [expiringList, expiredThisWeek, lastDoorAlert] = await Promise.all([
     getExpiringSubscriptions(alertDays),
     getExpiredThisWeekCount(),
     getLastDoorAlert(alertDays),
-    getEquipmentStatsSummary(),
-    query<{ count: string }>(
-      `SELECT COUNT(*)::text AS count FROM subscriptions WHERE status = 'paused'`
-    ),
-    query<{ count: string }>(
-      `SELECT COUNT(*)::text AS count FROM demo_requests WHERE status = 'pending'`
-    ),
   ]);
+
+  const countsRow = adminCountsRes.rows[0] ?? {
+    pending: '0',
+    pending_old: '0',
+    active_subs: '0',
+    paused_subs: '0',
+    demo_pending: '0',
+  };
 
   return {
     totalRevenue: parseFloat(paymentAgg.rows[0]?.total_all || '0'),
-    pendingPayments: parseInt(pendingAgg.rows[0]?.pending || '0', 10),
-    pendingPaymentsOlderThan2Days: parseInt(pendingAgg.rows[0]?.pending_old || '0', 10),
-    activeSubscriptions: parseInt(activeSubscriptions.rows[0]?.count || '0', 10),
-    pausedSubscriptions: parseInt(pausedSubs.rows[0]?.count || '0', 10),
+    pendingPayments: parseInt(countsRow.pending || '0', 10),
+    pendingPaymentsOlderThan2Days: parseInt(countsRow.pending_old || '0', 10),
+    activeSubscriptions: parseInt(countsRow.active_subs || '0', 10),
+    pausedSubscriptions: parseInt(countsRow.paused_subs || '0', 10),
     todayCheckIns: parseInt(attendanceAgg.rows[0]?.today || '0', 10),
     yesterdayCheckIns: parseInt(attendanceAgg.rows[0]?.yesterday || '0', 10),
     revenueThisMonth: parseFloat(paymentAgg.rows[0]?.this_month || '0'),
@@ -197,7 +202,7 @@ async function buildAdminStats(): Promise<AdminStatsPayload> {
     equipmentMaintenance: equipmentStats.maintenance,
     equipmentOutOfService: equipmentStats.outOfService,
     equipmentInspectionsDue: equipmentStats.inspectionsDueThisWeek,
-    demoLeadsPending: parseInt(demoPending.rows[0]?.count || '0', 10),
+    demoLeadsPending: parseInt(countsRow.demo_pending || '0', 10),
   };
 }
 
@@ -488,6 +493,7 @@ async function buildTrainerStats(trainerId: number | null) {
       ),
       query<{ id: number; full_name: string }>(
         `SELECT u.id, u.full_name
+         FROM users u
          WHERE u.id IN (
            SELECT member_id FROM trainer_member_assignments WHERE trainer_id = $1
            UNION
