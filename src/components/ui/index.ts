@@ -50,3 +50,5 @@ export { FilterChips } from './FilterChips';
 export type { FilterChipOption } from './FilterChips';
 export { BackToDashboardLink } from './BackToDashboardLink';
 export { AnchoredMenu } from './AnchoredMenu';
+export { CustomSelect } from './CustomSelect';
+export type { CustomSelectOption, CustomSelectProps } from './CustomSelect';

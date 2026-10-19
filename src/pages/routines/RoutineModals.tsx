@@ -7,7 +7,7 @@ import {
   Input,
   NumericInput,
   DifficultySelect,
-  Select,
+  CustomSelect,
 } from '../../components/ui';
 import { Trash2 } from 'lucide-react';
 import { AssignRoutineForm } from '../../components/routines/AssignRoutineForm';
@@ -166,10 +166,9 @@ export function RoutineModals({
           {libraryRoutines.length > 0 ? (
             <div>
               <Label>Basada en (opcional)</Label>
-              <Select
-                value={newRoutine.clone_from_id ?? ''}
-                onChange={(e) => {
-                  const clone_from_id = e.target.value;
+              <CustomSelect
+                value={newRoutine.clone_from_id}
+                onChange={(clone_from_id) => {
                   const source = libraryRoutines.find((r) => String(r.id) === clone_from_id);
                   setNewRoutine({
                     ...newRoutine,
@@ -179,14 +178,16 @@ export function RoutineModals({
                       : {}),
                   });
                 }}
-              >
-                <option value="">En blanco</option>
-                {libraryRoutines.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name}
-                  </option>
-                ))}
-              </Select>
+                options={[
+                  { value: '', label: 'En blanco' },
+                  ...libraryRoutines.map((r) => ({
+                    value: String(r.id),
+                    label: r.name,
+                  })),
+                ]}
+                placeholder="En blanco"
+                searchPlaceholder="Buscar plantilla..."
+              />
               <p className="text-small text-text-muted mt-1">
                 Copia ejercicios de una plantilla existente.
               </p>
