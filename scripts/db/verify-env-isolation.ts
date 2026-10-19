@@ -13,7 +13,7 @@ import { getScriptPgSslConfig } from '../lib/pgSsl.ts';
 
 const RENDER_HEALTH = process.env.PUBLIC_APP_URL
   ? `${process.env.PUBLIC_APP_URL.replace(/\/+$/, '')}/api/health`
-  : 'https://gym-apure.onrender.com/api/health';
+  : 'https://gymapure.onrender.com/api/health';
 
 function loadEnvFile(file: string): void {
   if (fs.existsSync(file)) config({ path: path.resolve(file), override: true });

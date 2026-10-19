@@ -9,7 +9,7 @@
 
 services:
   - type: web
-    name: gym-apure
+    name: gymapure
     runtime: node
     plan: free
     nodeVersion: 22
@@ -24,7 +24,7 @@ services:
       - key: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
         value: '1'
       - key: PUBLIC_APP_URL
-        value: https://gym-apure.onrender.com
+        value: https://gymapure.onrender.com
       - key: REQUIRE_MFA_FOR_STAFF
         value: 'false'
       - key: ENABLE_HIBP_CHECK
