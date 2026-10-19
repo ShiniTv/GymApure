@@ -58,7 +58,7 @@ function main() {
   ok(
     'PUBLIC_APP_URL definido (HTTPS en producción)',
     !isProd || publicUrl.startsWith('https://'),
-    'https://caribean-gym.onrender.com o tu dominio custom'
+    'https://gym-apure.onrender.com o tu dominio custom'
   );
 
   const redisUrl = process.env.REDIS_URL?.trim() ?? '';

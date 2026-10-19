@@ -9,7 +9,7 @@
 
 services:
   - type: web
-    name: caribean-gym
+    name: gym-apure
     runtime: node
     plan: free
     nodeVersion: 22
@@ -24,7 +24,7 @@ services:
       - key: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
         value: '1'
       - key: PUBLIC_APP_URL
-        value: https://caribean-gym.onrender.com
+        value: https://gym-apure.onrender.com
       - key: REQUIRE_MFA_FOR_STAFF
         value: 'false'
       - key: ENABLE_HIBP_CHECK

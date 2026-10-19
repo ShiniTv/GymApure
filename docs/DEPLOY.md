@@ -110,22 +110,22 @@ Deben ser **privados** (acceso solo vía backend). La migración `storage_object
 
 ### 0. Reactivar tras cancelar la suscripción
 
-Si el servicio `caribean-gym` o el plan de pago se canceló:
+Si el servicio `gym-apure` o el plan de pago se canceló:
 
 1. [dashboard.render.com](https://dashboard.render.com) → Billing → reactiva el plan (Starter o superior; Free hace cold starts largos).
 2. Si el servicio web **sigue listado** (Suspended / Deleted pending): **Resume** / **Restore** → Manual Deploy → **Deploy latest commit**.
-3. Si el servicio **ya no existe**: **New → Blueprint** → elige el repo → usa [`render.yaml`](../render.yaml) (crea de nuevo `caribean-gym` + Key Value `caribean-gym-kv`).
+3. Si el servicio **ya no existe**: **New → Blueprint** → elige el repo → usa [`render.yaml`](../render.yaml) (crea de nuevo `gym-apure` + Key Value `caribean-gym-kv`).
 4. Vuelve a pegar secretos `sync: false` (desde `.env.prod` local o Supabase Dashboard → Producción):  
    `DATABASE_URL`, `JWT_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, `MFA_ENCRYPTION_KEY`, y opcionales SMTP / Sentry / VAPID / `DATABASE_SSL_CA`.
-5. Confirma `PUBLIC_APP_URL=https://caribean-gym.onrender.com` (o tu dominio custom).
-6. Smoke: `GET https://caribean-gym.onrender.com/api/health` → debe responder `db: up` (o equivalente OK).
+5. Confirma `PUBLIC_APP_URL=https://gym-apure.onrender.com` (o tu dominio custom).
+6. Smoke: `GET https://gym-apure.onrender.com/api/health` → debe responder `db: up` (o equivalente OK).
 
 La BD de producción en Supabase **no** se toca al reactivar Render; solo reenlazas las mismas variables.
 
 ### 1. Conectar repositorio
 
 1. Render Dashboard → **New → Blueprint**
-2. Conecta el repo `caribean-gym`
+2. Conecta el repo `GymApure`
 3. Render leerá [`render.yaml`](../render.yaml):
    - Plan: **Starter** (recomendado; evita cold starts)
    - Build: `npm ci && npm run build`
@@ -134,7 +134,7 @@ La BD de producción en Supabase **no** se toca al reactivar Render; solo reenla
 
 ### 2. Variables de entorno
 
-**Opción A — Blueprint Sync (recomendado):** tras cada cambio en [`render.yaml`](../render.yaml), en Render Dashboard → **Blueprints** → **Sync**. Eso crea el Key Value `caribean-gym-kv`, inyecta `REDIS_URL`, fija `PUBLIC_APP_URL=https://caribean-gym.onrender.com` y `REQUIRE_MFA_FOR_STAFF=false` (MFA opcional).
+**Opción A — Blueprint Sync (recomendado):** tras cada cambio en [`render.yaml`](../render.yaml), en Render Dashboard → **Blueprints** → **Sync**. Eso crea el Key Value `caribean-gym-kv`, inyecta `REDIS_URL`, fija `PUBLIC_APP_URL=https://gym-apure.onrender.com` y `REQUIRE_MFA_FOR_STAFF=false` (MFA opcional).
 
 **Opción B — Manual:** configura en Render Dashboard → Environment (plantilla en [`scripts/deploy/render-prod.env.example`](../scripts/deploy/render-prod.env.example)):
 
@@ -147,7 +147,7 @@ Configura en Render Dashboard → Environment:
 | `SUPABASE_SERVICE_ROLE_KEY`      | Sí           | Service role de prod                                                                    |
 | `NODE_ENV`                       | Sí           | `production` (ya en blueprint)                                                          |
 | `CRON_SECRET`                    | **Sí**       | `openssl rand -base64 32` — obligatorio; el servidor no arranca sin él                  |
-| `PUBLIC_APP_URL`                 | **Sí**       | `https://caribean-gym.onrender.com` — HTTPS; enlaces de reset y walk-in                 |
+| `PUBLIC_APP_URL`                 | **Sí**       | `https://gym-apure.onrender.com` — HTTPS; enlaces de reset y walk-in                    |
 | `REQUIRE_MFA_FOR_STAFF`          | No           | `false` en Blueprint — MFA opcional; staff puede activarlo en `/security`               |
 | `REDIS_URL`                      | **Sí (ops)** | Blueprint inyecta Key Value `caribean-gym-kv`; sin Redis el rate limit es por instancia |
 | `CORS_ORIGINS`                   | Opcional     | Solo si usas dominio custom aparte del de Render                                        |

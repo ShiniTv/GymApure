@@ -11,7 +11,9 @@ import pg from 'pg';
 import { PROD_REF } from '../lib/supabase-refs.ts';
 import { getScriptPgSslConfig } from '../lib/pgSsl.ts';
 
-const RENDER_HEALTH = 'https://caribean-gym.onrender.com/api/health';
+const RENDER_HEALTH = process.env.PUBLIC_APP_URL
+  ? `${process.env.PUBLIC_APP_URL.replace(/\/+$/, '')}/api/health`
+  : 'https://gym-apure.onrender.com/api/health';
 
 function loadEnvFile(file: string): void {
   if (fs.existsSync(file)) config({ path: path.resolve(file), override: true });
