@@ -2,6 +2,9 @@ import type { ErrorEvent, EventHint } from '@sentry/core';
 
 type BeforeSend = (event: ErrorEvent, hint: EventHint) => ErrorEvent | null;
 
+const BROWSER_ABORTED =
+  /\b(AbortError|The user aborted a request|signal is aborted without reason)\b/i;
+
 const SW_LOAD_FAILED =
   /service worker|serviceworker|sw\.js|Script .*sw\.js.* load failed|Failed to register a ServiceWorker/i;
 
@@ -30,8 +33,13 @@ function eventText(event: ErrorEvent, hint?: EventHint): string {
 
 /** Drop known deploy / cache / SW noise on the browser project. */
 export const browserBeforeSend: BeforeSend = (event, hint) => {
+  // Drop errors when the client device is actively offline
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return null;
+  }
+
   const text = eventText(event, hint);
-  if (SW_LOAD_FAILED.test(text) || CHUNK_LOAD_FAILED.test(text)) {
+  if (SW_LOAD_FAILED.test(text) || CHUNK_LOAD_FAILED.test(text) || BROWSER_ABORTED.test(text)) {
     return null;
   }
   return event;

@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useNavigate } from 'react-router';
+import { clientLogger } from '../lib/clientLogger';
 import { apiFetch, registerUnauthorizedHandler, setAuthBootstrapComplete } from '../lib/api';
 import { dispatchSessionRevoked, onSessionRevoked } from '../lib/sessionEvents';
 import { queryClient } from '../lib/queryClient';
@@ -46,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutLocal = useCallback(
     (message?: string) => {
+      void queryClient.cancelQueries();
       queryClient.clear();
       setUser(null);
       if (message) {
@@ -116,9 +118,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
-    void apiFetch('/api/auth/logout', { method: 'POST' }).finally(() => {
-      logoutLocal();
-    });
+    void queryClient.cancelQueries();
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 4_000);
+
+    void apiFetch('/api/auth/logout', { method: 'POST', signal: controller.signal })
+      .catch((err) => {
+        clientLogger.warn('Remote logout fetch failed or timed out', err);
+      })
+      .finally(() => {
+        window.clearTimeout(timeout);
+        logoutLocal();
+      });
   }, [logoutLocal]);
 
   const value = useMemo(

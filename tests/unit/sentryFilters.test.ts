@@ -16,6 +16,37 @@ describe('sentryFilters', () => {
     expect(result).toBeNull();
   });
 
+  it('drops browser events when navigator is offline', () => {
+    const originalNavigator = globalThis.navigator;
+    Object.defineProperty(globalThis, 'navigator', {
+      value: { onLine: false },
+      configurable: true,
+    });
+    const event = {
+      type: 'error',
+      message: 'Failed to fetch',
+    } as unknown as ErrorEvent;
+    const result = browserBeforeSend(event, emptyHint);
+    expect(result).toBeNull();
+    Object.defineProperty(globalThis, 'navigator', {
+      value: originalNavigator,
+      configurable: true,
+    });
+  });
+
+  it('drops intentional AbortError in browser', () => {
+    const event = {
+      type: 'error',
+      exception: {
+        values: [{ type: 'AbortError', value: 'The user aborted a request.' }],
+      },
+    } as unknown as ErrorEvent;
+    const result = browserBeforeSend(event, {
+      originalException: new Error('The user aborted a request.'),
+    });
+    expect(result).toBeNull();
+  });
+
   it('drops transient network aborts on server', () => {
     const event = {
       type: 'error',

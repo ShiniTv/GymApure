@@ -72,8 +72,9 @@ export const chatMessagesKey = (conversationId: number) =>
   ['chat', 'messages', conversationId] as const;
 export const chatMineKey = ['chat', 'mine'] as const;
 
-async function fetchUnreadCount(): Promise<number> {
-  const res = await apiFetch('/api/chat/unread-count');
+async function fetchUnreadCount(signal?: AbortSignal): Promise<number> {
+  const res = await apiFetch('/api/chat/unread-count', { signal });
+  if (res.status === 401) return 0;
   const data = await parseJsonResponse<{ count: number }>(res);
   return data.count;
 }
@@ -83,7 +84,8 @@ async function fetchConversations(
   expiringOnly?: boolean,
   unreadOnly?: boolean,
   page = 1,
-  pageSize = 50
+  pageSize = 50,
+  signal?: AbortSignal
 ): Promise<{
   items: ChatConversationListItem[];
   total: number;
@@ -96,7 +98,7 @@ async function fetchConversations(
   if (unreadOnly) qs.set('unread', 'true');
   qs.set('page', String(page));
   qs.set('pageSize', String(pageSize));
-  const res = await apiFetch(`/api/chat/conversations?${qs.toString()}`);
+  const res = await apiFetch(`/api/chat/conversations?${qs.toString()}`, { signal });
   return parseJsonResponse<{
     items: ChatConversationListItem[];
     total: number;
@@ -105,16 +107,18 @@ async function fetchConversations(
   }>(res);
 }
 
-async function fetchMemberConversations(): Promise<ChatConversationListItem[]> {
-  const res = await apiFetch('/api/chat/conversations/mine');
+async function fetchMemberConversations(signal?: AbortSignal): Promise<ChatConversationListItem[]> {
+  const res = await apiFetch('/api/chat/conversations/mine', { signal });
+  if (res.status === 401) return [];
   const data = await parseJsonResponse<{ items: ChatConversationListItem[] }>(res);
   return Array.isArray(data.items) ? data.items : [];
 }
 
 async function fetchMessages(
-  conversationId: number
+  conversationId: number,
+  signal?: AbortSignal
 ): Promise<{ messages: ChatMessage[]; hasMore: boolean }> {
-  const res = await apiFetch(`/api/chat/conversations/${conversationId}/messages`);
+  const res = await apiFetch(`/api/chat/conversations/${conversationId}/messages`, { signal });
   return parseJsonResponse<{ messages: ChatMessage[]; hasMore: boolean }>(res);
 }
 
@@ -129,13 +133,15 @@ async function openMemberChannel(channel: ChatStaffChannel): Promise<ChatConvers
 }
 
 export function useChatUnreadQuery(enabled = true) {
+  const { user } = useAuth();
   const { isConnected } = useSocket();
+  const isQueryEnabled = enabled && Boolean(user);
 
   return useQuery({
     queryKey: chatUnreadKey,
-    queryFn: fetchUnreadCount,
-    enabled,
-    refetchInterval: enabled ? chatPollInterval(isConnected) : false,
+    queryFn: ({ signal }) => fetchUnreadCount(signal),
+    enabled: isQueryEnabled,
+    refetchInterval: isQueryEnabled ? chatPollInterval(isConnected) : false,
   });
 }
 
@@ -153,7 +159,8 @@ export function useChatConversationsQuery(
 
   return useQuery({
     queryKey: chatConversationsKey(search, expiringOnly, unreadOnly, page, pageSize),
-    queryFn: () => fetchConversations(search, expiringOnly, unreadOnly, page, pageSize),
+    queryFn: ({ signal }) =>
+      fetchConversations(search, expiringOnly, unreadOnly, page, pageSize, signal),
     enabled: canList,
     refetchInterval: canList ? chatPollInterval(isConnected) : false,
   });
@@ -166,7 +173,7 @@ export function useMemberChatQuery(enabled = true) {
 
   return useQuery({
     queryKey: chatMineKey,
-    queryFn: fetchMemberConversations,
+    queryFn: ({ signal }) => fetchMemberConversations(signal),
     enabled: canLoad,
     refetchInterval: canLoad ? chatPollInterval(isConnected) : false,
   });
@@ -177,7 +184,7 @@ export function useChatMessagesQuery(conversationId: number | null, enabled = tr
 
   return useQuery({
     queryKey: chatMessagesKey(conversationId ?? 0),
-    queryFn: () => fetchMessages(conversationId!),
+    queryFn: ({ signal }) => fetchMessages(conversationId!, signal),
     enabled: enabled && conversationId != null,
     refetchInterval: (query) => {
       if (query.state.error) return false;
